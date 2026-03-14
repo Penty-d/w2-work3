@@ -1,0 +1,22 @@
+app:
+  name: w2work3
+  host: 0.0.0.0
+  port: 8080
+
+db:
+  host: 127.0.0.1
+  port: 5432
+  user: postgres
+  password: 114514
+  dbname: mydb
+  ssl_mode: disable
+  time_zone: Asia/Shanghai
+
+jwt:
+  secret: 1919810
+  expire_hour: 24
+
+redis:
+  addr: 127.0.0.1:6379
+  password: ""
+  db: 0
