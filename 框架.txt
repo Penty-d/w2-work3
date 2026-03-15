@@ -8,7 +8,7 @@ id userid title content views status created_at start_at end_at
 repository层
 事务模块：
 CreateTodo
-UpdateTodoStatus
+UpdateTodo
 GetTodoByStatusAndUserid
 GetTodoByKeywordsAndUserid
 DeleteTodoByIdAndUserid
