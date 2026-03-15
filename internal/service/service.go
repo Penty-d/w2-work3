@@ -17,8 +17,8 @@ type AuthService struct {
 	userrepo repository.UserRepository
 }
 
-func NewAuthService(userRepo UserRepository) *AuthService {
-	return &AuthService{userRepo: userRepo}
+func NewAuthService(userrepo repository.UserRepository) *AuthService {
+	return &AuthService{userrepo: userrepo}
 }
 func (r *AuthService) SignupUser(ctx context.Context, username string, password string) error {
 	username = strings.TrimSpace(username)
