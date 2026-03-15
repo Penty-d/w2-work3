@@ -31,7 +31,6 @@ BatchDeleteTodos
 用户模块：
 SignupUser
 LoginUser
-LogoutUser
 DeleteUser
 
 handler层
