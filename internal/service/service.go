@@ -119,4 +119,79 @@ func (s *TodoService) AddTodo(ctx context.Context, userid uint, title string, co
 	return todo.ID, nil
 }
 
-func (s *TodoService) 
+func (s *TodoService) ListTodo(ctx context.Context, lmt repository.TodoQueryLimit) ([]model.Todo, int64, error) {
+	if lmt.UserID == 0 {
+		return nil, 0, errors.New("invalid user")
+	}
+	if lmt.Page <= 0 {
+		lmt.Page = 1
+	}
+	if lmt.PageSize <= 0 {
+		lmt.PageSize = 1
+	}
+	var todos []model.Todo
+	var total int64
+	todos, total, err := s.todorepo.GetTodos(ctx, lmt)
+	if err != nil {
+		return nil, 0, err
+	}
+	if total == 0 {
+		return nil, 0, errors.New("todo not found")
+	}
+	return todos, total, nil
+}
+
+func (s *TodoService) UpdateTodo(ctx context.Context, ids []uint, userid uint, todo *model.Todo, conds ...string) error {
+	if err := validateConds(conds); err != nil {
+		return err
+	}
+	if len(ids) == 0 {
+		return errors.New("invalid id")
+	}
+	if userid == 0 {
+		return errors.New("invalid userid")
+	}
+	return s.todorepo.UpdateTodo(ctx, ids, userid, todo, conds...)
+}
+
+func (s *TodoService) DeleteTodo(ctx context.Context, userid uint, id uint) error {
+	if id == 0 {
+		return errors.New("invalid id")
+	}
+	if userid == 0 {
+		return errors.New("invalid userid")
+	}
+	return s.todorepo.DeleteTodoByID(ctx, userid, id)
+}
+
+func (s *TodoService) DeleteTodoByStatus(ctx context.Context, userid uint, status bool) (int64, error) {
+	if userid == 0 {
+		return 0, errors.New("invalid userid")
+	}
+	return s.todorepo.DeleteTodoByStatus(ctx, userid, status)
+}
+
+func (s *TodoService) DeleteAllTodos(ctx context.Context, userid uint) (int64, error) {
+	if userid == 0 {
+		return 0, errors.New("invalid userid")
+	}
+	return s.todorepo.DeleteAllTodos(ctx, userid)
+}
+
+func validateConds(conds []string) error {
+	allowed := map[string]struct{}{
+		"title":    {},
+		"content":  {},
+		"status":   {},
+		"start_at": {},
+		"end_at":   {},
+		"views":    {},
+	}
+
+	for _, cond := range conds {
+		if _, ok := allowed[cond]; !ok {
+			return errors.New("invalid cond: " + cond)
+		}
+	}
+	return nil
+}

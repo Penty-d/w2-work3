@@ -21,13 +21,9 @@ GetUserByUserName
 service层
 事务模块:
 AddTodo
-GetTodo
 ListTodo
 UpdateTodo
-UpdateTodoStatus
-BatchUpdateTodoStatus
 DeleteTodo
-BatchDeleteTodos
 用户模块：
 SignupUser
 LoginUser

@@ -70,11 +70,11 @@ func (r *TodoRepository) CreateTodo(ctx context.Context, todo *model.Todo) error
 	return r.db.WithContext(ctx).Create(todo).Error
 }
 
-func (r *TodoRepository) UpdateTodo(ctx context.Context, todo *model.Todo, fields ...string) error {
+func (r *TodoRepository) UpdateTodo(ctx context.Context, ids []uint, userid uint, todo *model.Todo, conds ...string) error {
 	result := r.db.WithContext(ctx).
 		Model(&model.Todo{}).
-		Where("id = ? AND user_id = ?", todo.ID, todo.UserID).
-		Select(fields).
+		Where("id IN ? AND user_id = ?", ids, userid).
+		Select(conds).
 		Updates(todo)
 	if result.Error != nil {
 		return result.Error
@@ -86,12 +86,6 @@ func (r *TodoRepository) UpdateTodo(ctx context.Context, todo *model.Todo, field
 }
 
 func (r *TodoRepository) GetTodos(ctx context.Context, lmt TodoQueryLimit) ([]model.Todo, int64, error) {
-	if lmt.Page <= 0 {
-		lmt.Page = 1
-	}
-	if lmt.PageSize <= 0 {
-		lmt.PageSize = 1
-	}
 
 	db := r.db.WithContext(ctx).Model(&model.Todo{}).Where("user_id = ?", lmt.UserID)
 	if lmt.Status != nil {
@@ -119,11 +113,14 @@ func (r *TodoRepository) DeleteTodoByID(ctx context.Context, userid uint, id uin
 	return r.db.WithContext(ctx).Where("id = ? AND user_id = ?", id, userid).Delete(&model.Todo{}).Error
 }
 
-func (r *TodoRepository) DeleteTodoByStatus(ctx context.Context, userid uint, status *bool) (int64, error) { //偷个懒，status留空为全删
+func (r *TodoRepository) DeleteTodoByStatus(ctx context.Context, userid uint, status bool) (int64, error) {
+	db := r.db.WithContext(ctx).Where("user_id = ? AND status = ?", userid, status)
+	result := db.Delete(&model.Todo{})
+	return result.RowsAffected, result.Error
+}
+
+func (r *TodoRepository) DeleteAllTodos(ctx context.Context, userid uint) (int64, error) {
 	db := r.db.WithContext(ctx).Where("user_id = ?", userid)
-	if status != nil {
-		db = db.Where("status = ?", *status)
-	}
 	result := db.Delete(&model.Todo{})
 	return result.RowsAffected, result.Error
 }
