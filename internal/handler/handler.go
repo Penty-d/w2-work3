@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"time"
 	"w2work3/internal/constant"
 	"w2work3/internal/service"
 
@@ -36,7 +37,6 @@ func (h *AuthHandler) SignupUser(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusBadRequest, Response{
 			Status: constant.StatusInvalidRequest,
 			Msg:    "invalid request",
-			Data:   nil,
 		})
 		return
 	}
@@ -44,14 +44,12 @@ func (h *AuthHandler) SignupUser(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusInternalServerError, Response{
 			Status: constant.StatusFailed,
 			Msg:    err.Error(),
-			Data:   nil,
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
 		Status: constant.StatusOK,
 		Msg:    "success",
-		Data:   nil,
 	})
 }
 
@@ -61,7 +59,6 @@ func (h *AuthHandler) LoginUser(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusBadRequest, Response{
 			Status: constant.StatusInvalidRequest,
 			Msg:    "invalid request",
-			Data:   nil,
 		})
 		return
 	}
@@ -70,7 +67,6 @@ func (h *AuthHandler) LoginUser(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusInternalServerError, Response{
 			Status: constant.StatusFailed,
 			Msg:    err.Error(),
-			Data:   nil,
 		})
 		return
 	}
@@ -87,7 +83,6 @@ func (h *AuthHandler) DeleteUser(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusBadRequest, Response{
 			Status: constant.StatusInvalidRequest,
 			Msg:    "invalid request",
-			Data:   nil,
 		})
 		return
 	}
@@ -95,14 +90,12 @@ func (h *AuthHandler) DeleteUser(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusInternalServerError, Response{
 			Status: constant.StatusFailed,
 			Msg:    err.Error(),
-			Data:   nil,
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
 		Status: constant.StatusOK,
 		Msg:    "success",
-		Data:   nil,
 	})
 }
 
@@ -112,19 +105,72 @@ type TodoHandler struct {
 	todosvc *service.TodoService
 }
 
+type Todo struct {
+	Title   string    `json:"title"`
+	Content string    `json:"content"`
+	StartAt time.Time `json:"startat"`
+	EndAt   time.Time `json:"endat"`
+}
+
+type QueryConditions struct {
+	Page     int    `json:"page"`
+	PageSize int    `json:"pagesize"`
+	Status   bool   `json:"status,omitempty"`
+	Keyword  string `json:"keyword,omitempty"`
+}
+
 func NewTodoHandler(todosvc *service.TodoService) *TodoHandler {
 	return &TodoHandler{todosvc: todosvc}
 }
 
-func AddTodo(ctx context.Context, c *app.RequestContext) {
-	userid, exists := c.Get("userid")
-	if !exists || userid == 0 {
+func (h *TodoHandler) AddTodo(ctx context.Context, c *app.RequestContext) {
+	uid, exists := c.Get("userid")
+	userid, ok := uid.(uint)
+	if !exists || !ok || userid == 0 {
 		c.JSON(consts.StatusUnauthorized, Response{
 			Status: constant.StatusUnauthorized,
 			Msg:    "unauthorized",
-			Data:   nil,
 		})
 	}
+	var todo Todo
+	if err := c.BindAndValidate(&todo); err != nil {
+		c.JSON(consts.StatusBadRequest, Response{
+			Status: constant.StatusInvalidRequest,
+			Msg:    "invalid request",
+		})
+		return
+	}
+	ID, err := h.todosvc.AddTodo(ctx, userid, todo.Title, todo.Content, todo.StartAt, todo.EndAt)
+	if err != nil || ID == 0 {
+		c.JSON(consts.StatusInternalServerError, Response{
+			Status: constant.StatusFailed,
+			Msg:    err.Error(),
+		})
+		return
+	}
+	c.JSON(consts.StatusOK, Response{
+		Status: constant.StatusOK,
+		Msg:    "success",
+		Data:   map[string]uint{"TodoID": ID},
+	})
+}
 
-	c.BindAndValidate()
+func (h *TodoHandler) ListTodo(ctx context.Context, c *app.RequestContext) {
+	uid, exists := c.Get("userid")
+	userid, ok := uid.(uint)
+	if !exists || !ok || userid == 0 {
+		c.JSON(consts.StatusUnauthorized, Response{
+			Status: constant.StatusUnauthorized,
+			Msg:    "unauthorized",
+		})
+	}
+	var conds QueryConditions
+	if err := c.BindAndValidate(&conds); err != nil {
+		c.JSON(consts.StatusBadRequest, Response{
+			Status: constant.StatusInvalidRequest,
+			Msg:    "invalid request",
+		})
+		return
+	}
+
 }
