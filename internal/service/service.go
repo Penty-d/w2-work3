@@ -119,19 +119,19 @@ func (s *TodoService) AddTodo(ctx context.Context, userid uint, title string, co
 	return todo.ID, nil
 }
 
-func (s *TodoService) ListTodo(ctx context.Context, lmt repository.TodoQueryLimit) ([]model.Todo, int64, error) {
-	if lmt.UserID == 0 {
+func (s *TodoService) ListTodo(ctx context.Context, conds model.TodoQueryConditions) ([]model.Todo, int64, error) {
+	if conds.UserID == 0 {
 		return nil, 0, errors.New("invalid user")
 	}
-	if lmt.Page <= 0 {
-		lmt.Page = 1
+	if conds.Page <= 0 {
+		conds.Page = 1
 	}
-	if lmt.PageSize <= 0 {
-		lmt.PageSize = 1
+	if conds.PageSize <= 0 {
+		conds.PageSize = 1
 	}
 	var todos []model.Todo
 	var total int64
-	todos, total, err := s.todorepo.GetTodos(ctx, lmt)
+	todos, total, err := s.todorepo.GetTodos(ctx, conds)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -141,27 +141,38 @@ func (s *TodoService) ListTodo(ctx context.Context, lmt repository.TodoQueryLimi
 	return todos, total, nil
 }
 
-func (s *TodoService) UpdateTodo(ctx context.Context, ids []uint, userid uint, todo *model.Todo, conds ...string) error {
+func (s *TodoService) UpdateTodo(ctx context.Context, todo *model.Todo, conds ...string) error {
 	if err := validateConds(conds); err != nil {
 		return err
 	}
+	if todo.ID == 0 {
+		return errors.New("invalid id")
+	}
+	if todo.UserID == 0 {
+		return errors.New("invalid userid")
+	}
+	ids := []uint{todo.UserID}
+	return s.todorepo.UpdateTodo(ctx, ids, todo.UserID, todo, conds...)
+}
+
+func (s *TodoService) UpdateTodosStatus(ctx context.Context, ids []uint, userid uint, status bool) error {
 	if len(ids) == 0 {
 		return errors.New("invalid id")
 	}
 	if userid == 0 {
 		return errors.New("invalid userid")
 	}
-	return s.todorepo.UpdateTodo(ctx, ids, userid, todo, conds...)
+	return s.todorepo.UpdateTodo(ctx, ids, userid, &model.Todo{Status: status}, "status")
 }
 
-func (s *TodoService) DeleteTodo(ctx context.Context, userid uint, id uint) error {
-	if id == 0 {
+func (s *TodoService) DeleteTodo(ctx context.Context, userid uint, ids []uint) error {
+	if len(ids) == 0 {
 		return errors.New("invalid id")
 	}
 	if userid == 0 {
 		return errors.New("invalid userid")
 	}
-	return s.todorepo.DeleteTodoByID(ctx, userid, id)
+	return s.todorepo.DeleteTodosByID(ctx, userid, ids)
 }
 
 func (s *TodoService) DeleteTodoByStatus(ctx context.Context, userid uint, status bool) (int64, error) {

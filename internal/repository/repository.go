@@ -56,14 +56,6 @@ type TodoRepository struct {
 	db *gorm.DB
 }
 
-type TodoQueryLimit struct {
-	UserID   uint
-	Page     int
-	PageSize int
-	Status   *bool
-	Keyword  string
-}
-
 func NewTodoRepository(db *gorm.DB) *TodoRepository { return &TodoRepository{db: db} }
 
 func (r *TodoRepository) CreateTodo(ctx context.Context, todo *model.Todo) error {
@@ -85,32 +77,32 @@ func (r *TodoRepository) UpdateTodo(ctx context.Context, ids []uint, userid uint
 	return nil
 }
 
-func (r *TodoRepository) GetTodos(ctx context.Context, lmt TodoQueryLimit) ([]model.Todo, int64, error) {
+func (r *TodoRepository) GetTodos(ctx context.Context, conds model.TodoQueryConditions) ([]model.Todo, int64, error) {
 
-	db := r.db.WithContext(ctx).Model(&model.Todo{}).Where("user_id = ?", lmt.UserID)
-	if lmt.Status != nil {
-		db = db.Where("status = ?", *lmt.Status)
+	db := r.db.WithContext(ctx).Model(&model.Todo{}).Where("user_id = ?", conds.UserID)
+	if conds.Status != nil {
+		db = db.Where("status = ?", *conds.Status)
 	}
-	if lmt.Keyword != "" {
-		kw := "%" + lmt.Keyword + "%"
+	if conds.Keyword != "" {
+		kw := "%" + conds.Keyword + "%"
 		db = db.Where("(title ILIKE ? OR content ILIKE ?)", kw, kw)
 	}
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	offset := (lmt.Page - 1) * lmt.PageSize
+	offset := (conds.Page - 1) * conds.PageSize
 	var rtodos []model.Todo
 	//补一个按时间排序
 	db = db.Order("created_at DESC")
-	if err := db.Limit(lmt.PageSize).Offset(offset).Find(&rtodos).Error; err != nil {
+	if err := db.Limit(conds.PageSize).Offset(offset).Find(&rtodos).Error; err != nil {
 		return nil, 0, err
 	}
 	return rtodos, total, nil
 }
 
-func (r *TodoRepository) DeleteTodoByID(ctx context.Context, userid uint, id uint) error { //删单个
-	return r.db.WithContext(ctx).Where("id = ? AND user_id = ?", id, userid).Delete(&model.Todo{}).Error
+func (r *TodoRepository) DeleteTodosByID(ctx context.Context, userid uint, ids []uint) error { //删单个
+	return r.db.WithContext(ctx).Where("id IN ? AND user_id = ?", ids, userid).Delete(&model.Todo{}).Error
 }
 
 func (r *TodoRepository) DeleteTodoByStatus(ctx context.Context, userid uint, status bool) (int64, error) {
