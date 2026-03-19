@@ -105,6 +105,18 @@ func NewTodoService(todorepo repository.TodoRepository) TodoService {
 }
 
 func (s *TodoService) AddTodo(ctx context.Context, userid uint, title string, content string, startat time.Time, endat time.Time) (uint, error) {
+	if userid == 0 {
+		return 0, errors.New("invalid userid")
+	}
+	if strings.TrimSpace(title) == "" {
+		return 0, errors.New("invalid title")
+	}
+	if strings.TrimSpace(content) == "" {
+		return 0, errors.New("invalid content")
+	}
+	if startat.After(endat) {
+		return 0, errors.New("invalid at")
+	}
 	todo := &model.Todo{
 		UserID:  userid,
 		Title:   title,
@@ -124,19 +136,16 @@ func (s *TodoService) ListTodo(ctx context.Context, conds model.TodoQueryConditi
 		return nil, 0, errors.New("invalid user")
 	}
 	if conds.Page <= 0 {
-		conds.Page = 1
+		return nil, 0, errors.New("invalid page")
 	}
 	if conds.PageSize <= 0 {
-		conds.PageSize = 1
+		return nil, 0, errors.New("invalid pagesize")
 	}
 	var todos []model.Todo
 	var total int64
 	todos, total, err := s.todorepo.GetTodos(ctx, conds)
 	if err != nil {
 		return nil, 0, err
-	}
-	if total == 0 {
-		return nil, 0, errors.New("todo not found")
 	}
 	return todos, total, nil
 }
@@ -151,7 +160,7 @@ func (s *TodoService) UpdateTodo(ctx context.Context, todo *model.Todo, conds ..
 	if todo.UserID == 0 {
 		return errors.New("invalid userid")
 	}
-	ids := []uint{todo.UserID}
+	ids := []uint{todo.ID}
 	return s.todorepo.UpdateTodo(ctx, ids, todo.UserID, todo, conds...)
 }
 

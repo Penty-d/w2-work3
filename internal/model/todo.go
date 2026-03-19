@@ -7,11 +7,11 @@ type Todo struct {
 	UserID    uint      `gorm:"index;not null" json:"-"`
 	Title     string    `gorm:"size:64;not null" json:"title"`
 	Content   string    `gorm:"type:text" json:"content"`
-	Views     uint      `gorm:"default:0;not null" json:"views"`
+	Views     uint      `gorm:"default:0;not null" json:"view"`
 	Status    bool      `gorm:"not null;default:false" json:"status"`
-	CreatedAt time.Time `gorm:"not null" json:"-"`
-	StartAt   time.Time `gorm:"not null" json:"start_at"`
-	EndAt     time.Time `gorm:"not null" json:"end_at"`
+	CreatedAt time.Time `gorm:"not null" json:"create_at"`
+	StartAt   time.Time `gorm:"not null" json:"start_time"`
+	EndAt     time.Time `gorm:"not null" json:"end_time"`
 }
 
 type TodoQueryConditions struct {

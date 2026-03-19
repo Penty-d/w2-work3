@@ -14,11 +14,9 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	/*
-		if err := db.AutoMigrate(&model.User{}, &model.Todo{}); err != nil {
-			return nil, err
-		} 自动建表，但不需要
-	*/
+	if err := db.AutoMigrate(&model.User{}, &model.Todo{}); err != nil {
+		return nil, err
+	}
 	return db, nil
 }
 

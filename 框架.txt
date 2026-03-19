@@ -48,10 +48,8 @@ handler层
 			/batchdeletetodos
 中间件
 |recovery
-|TraceID
 |logger
 |JWTAuth
-↓CORS
 
 
 		
