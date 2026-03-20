@@ -3,12 +3,14 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"w2work3/internal/constant"
 	"w2work3/internal/model"
 	"w2work3/internal/service"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"gorm.io/gorm"
 )
 
 type Response struct {
@@ -65,6 +67,13 @@ func (h *AuthHandler) LoginUser(ctx context.Context, c *app.RequestContext) {
 	}
 	token, err := h.authsvc.LoginUser(ctx, req.UserName, req.PassWord)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(consts.StatusNotFound, Response{
+				Status: constant.StatusNotFound,
+				Msg:    "user not found",
+			})
+			return
+		}
 		c.JSON(consts.StatusInternalServerError, Response{
 			Status: constant.StatusFailed,
 			Msg:    err.Error(),
@@ -87,7 +96,15 @@ func (h *AuthHandler) DeleteUser(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	if err := h.authsvc.DeleteUser(ctx, req.UserName, req.PassWord); err != nil {
+	err := h.authsvc.DeleteUser(ctx, req.UserName, req.PassWord)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(consts.StatusNotFound, Response{
+				Status: constant.StatusNotFound,
+				Msg:    "user not found",
+			})
+			return
+		}
 		c.JSON(consts.StatusInternalServerError, Response{
 			Status: constant.StatusFailed,
 			Msg:    err.Error(),
@@ -133,7 +150,7 @@ func (h *TodoHandler) AddTodo(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	ID, err := h.todosvc.AddTodo(ctx, userid, todo.Title, todo.Content, todo.StartAt, todo.EndAt)
+	ID, err := h.todosvc.AddTodo(ctx, userid, todo.Title, todo.Content, todo.StartTime, todo.EndTime)
 	if err != nil || ID == 0 {
 		c.JSON(consts.StatusInternalServerError, Response{
 			Status: constant.StatusFailed,
@@ -219,11 +236,30 @@ func (h *TodoHandler) UpdateTodo(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
+	todo.UserID = userid
 	conds := make([]string, 0, len(raw))
 	for c := range raw {
 		conds = append(conds, c)
 	}
-	h.todosvc.UpdateTodo(ctx, &todo, conds...)
+	err := h.todosvc.UpdateTodo(ctx, &todo, conds...)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(consts.StatusNotFound, Response{
+				Status: constant.StatusNotFound,
+				Msg:    "todo not found",
+			})
+			return
+		}
+		c.JSON(consts.StatusInternalServerError, Response{
+			Status: constant.StatusFailed,
+			Msg:    err.Error(),
+		})
+		return
+	}
+	c.JSON(consts.StatusOK, Response{
+		Status: constant.StatusOK,
+		Msg:    "success",
+	})
 }
 
 func (h *TodoHandler) UpdateTodosStatus(ctx context.Context, c *app.RequestContext) {
@@ -244,7 +280,15 @@ func (h *TodoHandler) UpdateTodosStatus(ctx context.Context, c *app.RequestConte
 		})
 		return
 	}
-	if err := h.todosvc.UpdateTodosStatus(ctx, req.IDs, userid, req.Status); err != nil {
+	err := h.todosvc.UpdateTodosStatus(ctx, req.IDs, userid, req.Status)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(consts.StatusNotFound, Response{
+				Status: constant.StatusNotFound,
+				Msg:    "todo not found",
+			})
+			return
+		}
 		c.JSON(consts.StatusInternalServerError, Response{
 			Status: constant.StatusFailed,
 			Msg:    err.Error(),
@@ -276,6 +320,13 @@ func (h *TodoHandler) DeleteTodo(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	if err := h.todosvc.DeleteTodo(ctx, userid, req.IDs); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(consts.StatusNotFound, Response{
+				Status: constant.StatusNotFound,
+				Msg:    "todo not found",
+			})
+			return
+		}
 		c.JSON(consts.StatusInternalServerError, Response{
 			Status: constant.StatusFailed,
 			Msg:    err.Error(),

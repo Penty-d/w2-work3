@@ -40,16 +40,18 @@ func main() {
 	{
 		UserGroup.POST("/signup", authHandler.SignupUser)
 		UserGroup.POST("/login", authHandler.LoginUser)
-		UserGroup.POST("/delete", authHandler.DeleteUser)
+		UserGroup.DELETE("/delete", authHandler.DeleteUser)
 	}
 
 	TodoGroup := api.Group("/todo", middleware.JWTAuth(cfg.JWT.Secret))
 	{
-		TodoGroup.POST("/create", todoHandler.AddTodo)
-		TodoGroup.POST("/list", todoHandler.ListTodo)
-		TodoGroup.PATCH("/update", todoHandler.UpdateTodo)
+		TodoGroup.POST("/add", todoHandler.AddTodo)
+		TodoGroup.GET("", todoHandler.ListTodo)
+		TodoGroup.PATCH("", todoHandler.UpdateTodo)
 		TodoGroup.PATCH("/status", todoHandler.UpdateTodosStatus)
-		TodoGroup.DELETE("/delete", todoHandler.DeleteTodo)
+		TodoGroup.DELETE("", todoHandler.DeleteTodo)
+		TodoGroup.DELETE("/all", todoHandler.DeleteAllTodos)
+		TodoGroup.DELETE("/status", todoHandler.DeleteTodosByStatus)
 	}
 
 	log.Printf("server running at %s:%d", cfg.App.Host, cfg.App.Port)

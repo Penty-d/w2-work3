@@ -118,12 +118,12 @@ func (s *TodoService) AddTodo(ctx context.Context, userid uint, title string, co
 		return 0, errors.New("invalid at")
 	}
 	todo := &model.Todo{
-		UserID:  userid,
-		Title:   title,
-		Content: content,
-		StartAt: startat,
-		EndAt:   endat,
-		Views:   0,
+		UserID:    userid,
+		Title:     title,
+		Content:   content,
+		StartTime: startat,
+		EndTime:   endat,
+		Views:     0,
 	}
 	if err := s.todorepo.CreateTodo(ctx, todo); err != nil {
 		return 0, err
@@ -200,12 +200,13 @@ func (s *TodoService) DeleteAllTodos(ctx context.Context, userid uint) (int64, e
 
 func validateConds(conds []string) error {
 	allowed := map[string]struct{}{
-		"title":    {},
-		"content":  {},
-		"status":   {},
-		"start_at": {},
-		"end_at":   {},
-		"views":    {},
+		"title":      {},
+		"content":    {},
+		"status":     {},
+		"start_time": {},
+		"end_time":   {},
+		"views":      {},
+		"id":         {},
 	}
 
 	for _, cond := range conds {

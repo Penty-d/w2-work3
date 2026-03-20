@@ -81,9 +81,11 @@ func (r *TodoRepository) GetTodos(ctx context.Context, conds model.TodoQueryCond
 	if conds.Status != nil {
 		db = db.Where("status = ?", *conds.Status)
 	}
-	if conds.Keyword != "" {
-		kw := "%" + conds.Keyword + "%"
-		db = db.Where("(title ILIKE ? OR content ILIKE ?)", kw, kw)
+	if len(conds.Keywords) > 0 {
+		for _, kw := range conds.Keywords {
+			like := "%" + kw + "%"
+			db = db.Where("(title ILIKE ? OR content ILIKE ?)", like, like)
+		}
 	}
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
@@ -100,7 +102,14 @@ func (r *TodoRepository) GetTodos(ctx context.Context, conds model.TodoQueryCond
 }
 
 func (r *TodoRepository) DeleteTodosByID(ctx context.Context, userid uint, ids []uint) error { //删单个
-	return r.db.WithContext(ctx).Where("id IN ? AND user_id = ?", ids, userid).Delete(&model.Todo{}).Error
+	result := r.db.WithContext(ctx).Where("id IN ? AND user_id = ?", ids, userid).Delete(&model.Todo{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (r *TodoRepository) DeleteTodoByStatus(ctx context.Context, userid uint, status bool) (int64, error) {
