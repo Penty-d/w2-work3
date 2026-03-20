@@ -56,7 +56,6 @@ func (s *AuthService) SignupUser(ctx context.Context, username string, password 
 	}
 	return user.ID, nil
 }
-
 func (s *AuthService) LoginUser(ctx context.Context, username string, password string) (string, error) {
 	username = strings.TrimSpace(username)
 	password = strings.TrimSpace(password)
@@ -206,7 +205,6 @@ func validateConds(conds []string) error {
 		"start_time": {},
 		"end_time":   {},
 		"views":      {},
-		"id":         {},
 	}
 
 	for _, cond := range conds {

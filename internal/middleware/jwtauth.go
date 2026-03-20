@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"w2work3/internal/constant"
 	"w2work3/internal/handler"
 	"w2work3/internal/utils/jwt"
 
@@ -17,7 +16,7 @@ func JWTAuth(secret string) app.HandlerFunc {
 		auth := string(c.GetHeader("Authorization"))
 		if auth == "" {
 			c.JSON(consts.StatusUnauthorized, handler.Response{
-				Status: constant.StatusUnauthorized,
+				Status: consts.StatusUnauthorized,
 				Msg:    "missing authorization header",
 			})
 			c.Abort()
@@ -27,7 +26,7 @@ func JWTAuth(secret string) app.HandlerFunc {
 		parts := strings.SplitN(auth, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" || parts[1] == "" {
 			c.JSON(consts.StatusUnauthorized, handler.Response{
-				Status: constant.StatusUnauthorized,
+				Status: consts.StatusUnauthorized,
 				Msg:    "invalid authorization header",
 			})
 			c.Abort()
@@ -37,7 +36,7 @@ func JWTAuth(secret string) app.HandlerFunc {
 		claims, err := jwt.ParseToken(secret, parts[1])
 		if err != nil {
 			c.JSON(consts.StatusUnauthorized, handler.Response{
-				Status: constant.StatusUnauthorized,
+				Status: consts.StatusUnauthorized,
 				Msg:    "invalid token",
 			})
 			c.Abort()

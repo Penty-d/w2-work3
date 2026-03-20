@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"w2work3/internal/constant"
 	"w2work3/internal/model"
 	"w2work3/internal/service"
 
@@ -38,20 +37,20 @@ func (h *AuthHandler) SignupUser(ctx context.Context, c *app.RequestContext) {
 	var req AuthRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
 	}
 	if _, err := h.authsvc.SignupUser(ctx, req.UserName, req.PassWord); err != nil {
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 	})
 }
@@ -60,7 +59,7 @@ func (h *AuthHandler) LoginUser(ctx context.Context, c *app.RequestContext) {
 	var req AuthRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -69,19 +68,19 @@ func (h *AuthHandler) LoginUser(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(consts.StatusNotFound, Response{
-				Status: constant.StatusNotFound,
+				Status: consts.StatusNotFound,
 				Msg:    "user not found",
 			})
 			return
 		}
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 		Data:   map[string]string{"Token": token},
 	})
@@ -91,7 +90,7 @@ func (h *AuthHandler) DeleteUser(ctx context.Context, c *app.RequestContext) {
 	var req AuthRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -100,19 +99,19 @@ func (h *AuthHandler) DeleteUser(ctx context.Context, c *app.RequestContext) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(consts.StatusNotFound, Response{
-				Status: constant.StatusNotFound,
+				Status: consts.StatusNotFound,
 				Msg:    "user not found",
 			})
 			return
 		}
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 	})
 }
@@ -137,7 +136,7 @@ func (h *TodoHandler) AddTodo(ctx context.Context, c *app.RequestContext) {
 	userid, ok := uid.(uint)
 	if !exists || !ok || userid == 0 {
 		c.JSON(consts.StatusUnauthorized, Response{
-			Status: constant.StatusUnauthorized,
+			Status: consts.StatusUnauthorized,
 			Msg:    "unauthorized",
 		})
 		return
@@ -145,7 +144,7 @@ func (h *TodoHandler) AddTodo(ctx context.Context, c *app.RequestContext) {
 	var todo model.Todo
 	if err := c.BindAndValidate(&todo); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -153,13 +152,13 @@ func (h *TodoHandler) AddTodo(ctx context.Context, c *app.RequestContext) {
 	ID, err := h.todosvc.AddTodo(ctx, userid, todo.Title, todo.Content, todo.StartTime, todo.EndTime)
 	if err != nil || ID == 0 {
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 		Data:   map[string]uint{"TodoID": ID},
 	})
@@ -170,7 +169,7 @@ func (h *TodoHandler) ListTodo(ctx context.Context, c *app.RequestContext) {
 	userid, ok := uid.(uint)
 	if !exists || !ok || userid == 0 {
 		c.JSON(consts.StatusUnauthorized, Response{
-			Status: constant.StatusUnauthorized,
+			Status: consts.StatusUnauthorized,
 			Msg:    "unauthorized",
 		})
 		return
@@ -178,7 +177,7 @@ func (h *TodoHandler) ListTodo(ctx context.Context, c *app.RequestContext) {
 	var conds model.TodoQueryConditions
 	if err := c.BindAndValidate(&conds); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -187,20 +186,13 @@ func (h *TodoHandler) ListTodo(ctx context.Context, c *app.RequestContext) {
 	todos, total, err := h.todosvc.ListTodo(ctx, conds)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
-	if total == 0 {
-		c.JSON(consts.StatusNotFound, Response{
-			Status: constant.StatusNotFound,
-			Msg:    "todo not found",
-		})
-		return
-	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 		Data: map[string]any{
 			"items": todos,
@@ -214,7 +206,7 @@ func (h *TodoHandler) UpdateTodo(ctx context.Context, c *app.RequestContext) {
 	userid, ok := uid.(uint)
 	if !exists || !ok || userid == 0 {
 		c.JSON(consts.StatusUnauthorized, Response{
-			Status: constant.StatusUnauthorized,
+			Status: consts.StatusUnauthorized,
 			Msg:    "unauthorized",
 		})
 		return
@@ -223,7 +215,7 @@ func (h *TodoHandler) UpdateTodo(ctx context.Context, c *app.RequestContext) {
 	var raw map[string]any
 	if err := json.Unmarshal(body, &raw); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -231,7 +223,7 @@ func (h *TodoHandler) UpdateTodo(ctx context.Context, c *app.RequestContext) {
 	var todo model.Todo
 	if err := json.Unmarshal(body, &todo); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -239,25 +231,27 @@ func (h *TodoHandler) UpdateTodo(ctx context.Context, c *app.RequestContext) {
 	todo.UserID = userid
 	conds := make([]string, 0, len(raw))
 	for c := range raw {
-		conds = append(conds, c)
+		if c != "id" {
+			conds = append(conds, c)
+		}
 	}
 	err := h.todosvc.UpdateTodo(ctx, &todo, conds...)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(consts.StatusNotFound, Response{
-				Status: constant.StatusNotFound,
+				Status: consts.StatusNotFound,
 				Msg:    "todo not found",
 			})
 			return
 		}
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 	})
 }
@@ -267,7 +261,7 @@ func (h *TodoHandler) UpdateTodosStatus(ctx context.Context, c *app.RequestConte
 	userid, ok := uid.(uint)
 	if !exists || !ok || userid == 0 {
 		c.JSON(consts.StatusUnauthorized, Response{
-			Status: constant.StatusUnauthorized,
+			Status: consts.StatusUnauthorized,
 			Msg:    "unauthorized",
 		})
 		return
@@ -275,7 +269,7 @@ func (h *TodoHandler) UpdateTodosStatus(ctx context.Context, c *app.RequestConte
 	var req TodoRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -284,19 +278,19 @@ func (h *TodoHandler) UpdateTodosStatus(ctx context.Context, c *app.RequestConte
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(consts.StatusNotFound, Response{
-				Status: constant.StatusNotFound,
+				Status: consts.StatusNotFound,
 				Msg:    "todo not found",
 			})
 			return
 		}
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 	})
 }
@@ -306,7 +300,7 @@ func (h *TodoHandler) DeleteTodo(ctx context.Context, c *app.RequestContext) {
 	userid, ok := uid.(uint)
 	if !exists || !ok || userid == 0 {
 		c.JSON(consts.StatusUnauthorized, Response{
-			Status: constant.StatusUnauthorized,
+			Status: consts.StatusUnauthorized,
 			Msg:    "unauthorized",
 		})
 		return
@@ -314,7 +308,7 @@ func (h *TodoHandler) DeleteTodo(ctx context.Context, c *app.RequestContext) {
 	var req TodoRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -322,19 +316,19 @@ func (h *TodoHandler) DeleteTodo(ctx context.Context, c *app.RequestContext) {
 	if err := h.todosvc.DeleteTodo(ctx, userid, req.IDs); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(consts.StatusNotFound, Response{
-				Status: constant.StatusNotFound,
+				Status: consts.StatusNotFound,
 				Msg:    "todo not found",
 			})
 			return
 		}
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 	})
 }
@@ -344,7 +338,7 @@ func (h *TodoHandler) DeleteTodosByStatus(ctx context.Context, c *app.RequestCon
 	userid, ok := uid.(uint)
 	if !exists || !ok || userid == 0 {
 		c.JSON(consts.StatusUnauthorized, Response{
-			Status: constant.StatusUnauthorized,
+			Status: consts.StatusUnauthorized,
 			Msg:    "unauthorized",
 		})
 		return
@@ -352,7 +346,7 @@ func (h *TodoHandler) DeleteTodosByStatus(ctx context.Context, c *app.RequestCon
 	var req TodoRequest
 	if err := c.BindAndValidate(&req); err != nil {
 		c.JSON(consts.StatusBadRequest, Response{
-			Status: constant.StatusInvalidRequest,
+			Status: consts.StatusBadRequest,
 			Msg:    "invalid request",
 		})
 		return
@@ -360,20 +354,20 @@ func (h *TodoHandler) DeleteTodosByStatus(ctx context.Context, c *app.RequestCon
 	total, err := h.todosvc.DeleteTodoByStatus(ctx, userid, req.Status)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	if total == 0 {
 		c.JSON(consts.StatusNotFound, Response{
-			Status: constant.StatusNotFound,
+			Status: consts.StatusNotFound,
 			Msg:    "todo not found",
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 		Data:   map[string]int64{"total": total},
 	})
@@ -384,7 +378,7 @@ func (h *TodoHandler) DeleteAllTodos(ctx context.Context, c *app.RequestContext)
 	userid, ok := uid.(uint)
 	if !exists || !ok || userid == 0 {
 		c.JSON(consts.StatusUnauthorized, Response{
-			Status: constant.StatusUnauthorized,
+			Status: consts.StatusUnauthorized,
 			Msg:    "unauthorized",
 		})
 		return
@@ -392,20 +386,20 @@ func (h *TodoHandler) DeleteAllTodos(ctx context.Context, c *app.RequestContext)
 	total, err := h.todosvc.DeleteAllTodos(ctx, userid)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, Response{
-			Status: constant.StatusFailed,
+			Status: consts.StatusInternalServerError,
 			Msg:    err.Error(),
 		})
 		return
 	}
 	if total == 0 {
 		c.JSON(consts.StatusNotFound, Response{
-			Status: constant.StatusNotFound,
+			Status: consts.StatusNotFound,
 			Msg:    "todo not found",
 		})
 		return
 	}
 	c.JSON(consts.StatusOK, Response{
-		Status: constant.StatusOK,
+		Status: consts.StatusOK,
 		Msg:    "success",
 		Data:   map[string]int64{"total": total},
 	})
