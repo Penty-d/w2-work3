@@ -7,10 +7,9 @@ import (
 )
 
 type Config struct {
-	App   AppConfig   `mapstructure:"app"`
-	DB    DBConfig    `mapstructure:"db"`
-	JWT   JWTConfig   `mapstructure:"jwt"`
-	Redis RedisConfig `mapstructure:"redis"`
+	App AppConfig `mapstructure:"app"`
+	DB  DBConfig  `mapstructure:"db"`
+	JWT JWTConfig `mapstructure:"jwt"`
 }
 
 type AppConfig struct {
@@ -32,12 +31,6 @@ type DBConfig struct {
 type JWTConfig struct {
 	Secret     string `mapstructure:"secret"`
 	ExpireHour int    `mapstructure:"expire_hour"`
-}
-
-type RedisConfig struct {
-	Addr     string `mapstructure:"addr"`
-	Password string `mapstructure:"password"`
-	DB       int    `mapstructure:"db"`
 }
 
 func (db DBConfig) DSN() string {

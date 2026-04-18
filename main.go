@@ -1,11 +1,11 @@
 package main
 
 import (
-	//"context"
 	"log"
 	"strconv"
 	"w2work3/internal/config"
 	"w2work3/internal/handler"
+	infraDB "w2work3/internal/infra/db"
 	"w2work3/internal/middleware"
 	"w2work3/internal/repository"
 	"w2work3/internal/service"
@@ -19,18 +19,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db, err := repository.InitDB(cfg)
+	db, err := infraDB.InitDB(cfg)
 	if err != nil {
 		panic(err)
 	}
 	userRepo := repository.NewUserRepository(db)
 	todoRepo := repository.NewTodoRepository(db)
 
-	authSvc := service.NewAuthService(*userRepo, cfg.JWT.Secret, cfg.JWT.ExpireHour)
-	todoSvc := service.NewTodoService(*todoRepo)
+	authSvc := service.NewAuthService(userRepo, cfg.JWT.Secret, cfg.JWT.ExpireHour)
+	todoSvc := service.NewTodoService(todoRepo)
 
 	authHandler := handler.NewAuthHandler(authSvc)
-	todoHandler := handler.NewTodoHandler(&todoSvc)
+	todoHandler := handler.NewTodoHandler(todoSvc)
 
 	h := server.Default(server.WithHostPorts(cfg.App.Host + ":" + strconv.Itoa(cfg.App.Port)))
 	h.Use(accesslog.New())
@@ -40,7 +40,7 @@ func main() {
 	{
 		UserGroup.POST("/signup", authHandler.SignupUser)
 		UserGroup.POST("/login", authHandler.LoginUser)
-		UserGroup.POST("/delete", authHandler.DeleteUser)
+		UserGroup.DELETE("/delete", authHandler.DeleteUser)
 	}
 
 	TodoGroup := api.Group("/todo", middleware.JWTAuth(cfg.JWT.Secret))
@@ -50,6 +50,8 @@ func main() {
 		TodoGroup.PATCH("/update", todoHandler.UpdateTodo)
 		TodoGroup.PATCH("/status", todoHandler.UpdateTodosStatus)
 		TodoGroup.DELETE("/delete", todoHandler.DeleteTodo)
+		TodoGroup.DELETE("/delete/status", todoHandler.DeleteTodosByStatus)
+		TodoGroup.DELETE("/delete/all", todoHandler.DeleteAllTodos)
 	}
 
 	log.Printf("server running at %s:%d", cfg.App.Host, cfg.App.Port)
